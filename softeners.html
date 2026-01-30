@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Diplomacy Hub | by Teacher Netza</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #f97316; --secondary: #ec4899; 
+            --gradient: linear-gradient(135deg, #f97316, #ec4899);
+            --bg-body: #fff7ed; --card-bg: #ffffff;
+            --text-main: #1e1b4b; --border: #fed7aa; 
+            --success: #10b981; --error: #ef4444; --overlay: rgba(0,0,0,0.4);
+        }
+
+        .dark-mode {
+            --bg-body: #020617; /* Navy Blue Profundo */
+            --card-bg: #0f172a; /* Navy Card */
+            --text-main: #f8fafc; --border: #1e293b; --overlay: rgba(0,0,0,0.8);
+        }
+
+        html, body { overflow-x: hidden; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg-body); color: var(--text-main); transition: 0.3s; }
+
+        /* --- Header & Side-Nav (FIXED) --- */
+        header { 
+            background: var(--card-bg); padding: 1rem 1.5rem; display: flex; 
+            justify-content: space-between; align-items: center; position: sticky; 
+            top: 0; z-index: 1000; border-bottom: 4px solid var(--primary); 
+        }
+        .nav-toggle { 
+            font-size: 1.5rem; cursor: pointer; background: var(--gradient); 
+            color: white; border: none; padding: 10px 15px; border-radius: 12px; 
+            z-index: 1100; transition: 0.3s;
+        }
+        
+        .side-nav {
+            position: fixed; top: 0; right: -450px; width: 300px; height: 100%;
+            background: var(--card-bg); z-index: 2000; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; padding: 2rem;
+            visibility: hidden; opacity: 0; box-shadow: none;
+        }
+        .side-nav.active { 
+            right: 0; visibility: visible; opacity: 1;
+            box-shadow: -15px 0 40px rgba(0,0,0,0.5); 
+        }
+        .nav-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; z-index: 1500; backdrop-filter: blur(5px); }
+        .nav-overlay.active { display: block; }
+        
+        .side-nav button { width: 100%; padding: 15px; margin: 8px 0; border: none; background: transparent; color: var(--text-main); font-weight: 800; text-align: left; cursor: pointer; border-radius: 12px; }
+        .side-nav button.active { background: var(--gradient); color: white; }
+        .side-nav .close-btn { align-self: flex-end; font-size: 1.8rem; background: none; color: var(--text-main); width: auto; margin-bottom: 20px; }
+
+        /* --- UI Elements --- */
+        .container { max-width: 850px; margin: 2rem auto; padding: 0 20px; min-height: 75vh; }
+        .card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 40px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+        h1 { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 2.5rem; margin-top: 0; }
+        h2 { color: var(--secondary); margin-top: 2rem; border-left: 5px solid var(--primary); padding-left: 15px; }
+
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 1.5rem; }
+        .tool-item { background: var(--bg-body); padding: 1.5rem; border-radius: 25px; border: 1px solid var(--border); transition: 0.3s; }
+        
+        .listen-btn { background: var(--gradient); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 5px 15px rgba(236, 72, 153, 0.2); }
+
+        /* --- Actividades --- */
+        .activity-item { background: var(--bg-body); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; font-size: 1.15rem; line-height: 1.8; }
+        select { padding: 8px; border-radius: 10px; border: 2px solid var(--primary); background: var(--card-bg); color: var(--text-main); font-weight: 700; cursor: pointer; }
+        
+        .res-correct { background-color: var(--success) !important; color: white !important; font-weight: 800; border-color: transparent !important; }
+        .res-wrong { background-color: var(--error) !important; color: white !important; font-weight: 800; border-color: transparent !important; }
+
+        .quiz-opt { width: 100%; text-align: left; padding: 18px; margin: 10px 0; border: 2px solid var(--border); border-radius: 20px; background: var(--card-bg); color: var(--text-main); font-weight: 700; cursor: pointer; transition: 0.2s; }
+
+        textarea { width: 100%; height: 140px; padding: 1.2rem; border-radius: 20px; border: 2px solid var(--border); background: var(--bg-body); color: var(--text-main); font-family: inherit; font-size: 1.1rem; resize: none; margin-top: 15px; }
+        .action-group { display: flex; gap: 12px; margin-top: 15px; }
+        .btn-check { flex: 2; background: var(--gradient); color: white; border: none; padding: 15px; border-radius: 15px; font-weight: 800; cursor: pointer; }
+        .btn-audio { flex: 1; background: var(--secondary); color: white; border: none; border-radius: 15px; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
+
+        footer { margin-top: 5rem; padding: 4rem 1.5rem; background: var(--card-bg); text-align: center; border-top: 6px solid var(--primary); }
+        .wa-float { position: fixed; bottom: 30px; left: 30px; background: #25d366; color: white; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; text-decoration: none; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s; }
+
+        @media (max-width: 600px) { h1 { font-size: 2rem; } .card { padding: 1.5rem; } }
+    </style>
+</head>
+<body onclick="initAudio()">
+
+<header>
+    <div class="logo-box">
+        <div style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">DIPLOMACY HUB</div>
+        <div style="font-size: 0.75rem; font-weight: 600; opacity: 0.7;">by Teacher Netza</div>
+    </div>
+    <button class="nav-toggle" onclick="toggleNav()">☰</button>
+</header>
+
+<div class="nav-overlay" id="overlay" onclick="toggleNav()"></div>
+<div class="side-nav" id="sideNav">
+    <button class="close-btn" onclick="toggleNav()">✕</button>
+    <button class="nav-link active" onclick="loadPage(0)">🏠 Inicio</button>
+    <button class="nav-link" onclick="loadPage(1)">📚 15 Herramientas</button>
+    <button class="nav-link" onclick="loadPage(2)">🧩 10 Frases</button>
+    <button class="nav-link" onclick="loadPage(3)">🧠 10 Escenarios</button>
+    <button class="nav-link" onclick="loadPage(4)">✍️ Writing Lab</button>
+    <hr style="width: 100%; opacity: 0.1; margin: 20px 0;">
+    <button onclick="toggleDark()" style="background: var(--bg-body); text-align: center; width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px;">🌓 Modo Oscuro</button>
+</div>
+
+<div class="container">
+    <div id="main-content" class="card">
+        </div>
+</div>
+
+<a href="https://wa.me/523231116425?text=Hola%20Netza%2C%20quiero%20información%20de%20tus%20clases%20personales." class="wa-float" target="_blank">
+    <i class="fab fa-whatsapp"></i>
+</a>
+
+<footer>
+    <div style="max-width: 550px; margin: 0 auto; background: var(--bg-body); padding: 2.5rem; border-radius: 35px; border: 2px solid var(--border);">
+        <h3 style="margin-top:0; color: var(--primary)">Personal English Coaching</h3>
+        <p>Especialista en comunicación efectiva y diplomacia B2/C1.</p>
+        <a href="mailto:teacher.netza.varo@gmail.com" style="color:var(--secondary); font-weight: 800; text-decoration:none;">teacher.netza.varo@gmail.com</a>
+        <p style="margin-top: 15px; font-weight: 700; color: var(--primary);">Tepic, Nayarit | México</p>
+    </div>
+    <p style="margin-top: 4rem; opacity: 0.4; font-size: 0.8rem; font-weight: 600;">© 2026 Teacher Netza | Licensed under GNU GPL v3.0</p>
+</footer>
+
+<script>
+    // --- MOTOR DE VOZ ---
+    let audioUnlocked = false;
+    function initAudio() {
+        if (!audioUnlocked) {
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+            audioUnlocked = true;
+        }
+    }
+
+    function speak(txt) {
+        if (!txt) return;
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(txt.replace(/[^\w\s.,'!?]/gi, ''));
+        msg.lang = 'en-US'; msg.rate = 0.85;
+        setTimeout(() => window.speechSynthesis.speak(msg), 50);
+    }
+
+    // --- DATA ---
+    const toolCategories = [
+        { cat: "🚫 Bad News & Refusals", items: [
+            { p: "I'm afraid that...", ex: "I'm afraid that won't be possible." },
+            { p: "Unfortunately, ...", ex: "Unfortunately, we are out of stock." },
+            { p: "I'm not entirely sure...", ex: "I'm not entirely sure we can do that now." }
+        ]},
+        { cat: "🗣️ Disagreements", items: [
+            { p: "To be honest...", ex: "To be honest, I disagree with that plan." },
+            { p: "With all due respect...", ex: "With all due respect, the data seems wrong." },
+            { p: "I see your point, but...", ex: "I see your point, but it's too expensive." },
+            { p: "Not exactly...", ex: "That's not exactly what I meant." },
+            { p: "I'm not so sure about that.", ex: "I'm not so sure about that strategy." }
+        ]},
+        { cat: "🤔 Suggestions & Requests", items: [
+            { p: "I was wondering if...", ex: "I was wondering if you could help me." },
+            { p: "Perhaps we could...", ex: "Perhaps we could try a different approach." },
+            { p: "It might be better to...", ex: "It might be better to wait until Monday." },
+            { p: "Couldn't we...?", ex: "Couldn't we just call the client now?" },
+            { p: "..., if you don't mind.", ex: "Please send the file, if you don't mind." }
+        ]},
+        { cat: "📍 Corrections", items: [
+            { p: "Actually, ...", ex: "Actually, the meeting is at 5, not 4." },
+            { p: "It seems that...", ex: "It seems that there is a misunderstanding." }
+        ]}
+    ];
+
+    const dropDownData = [
+        { q: "____, I think we have a mistake here.", a: "Actually", opts: ["Actually", "Suddenly", "Always"] },
+        { q: "____, we missed the deadline.", a: "Unfortunately", opts: ["Fortunately", "Unfortunately", "Maybe"] },
+        { q: "I'm ____ I can't help you today.", a: "afraid", opts: ["sorry", "afraid", "happy"] },
+        { q: "It ____ that there's a misunderstanding.", a: "seems", opts: ["is", "seems", "appears"] },
+        { q: "I see your ____, but I disagree.", a: "point", opts: ["reason", "point", "view"] },
+        { q: "We have a ____ of a problem here.", a: "bit", opts: ["little", "bit", "lot"] },
+        { q: "____ we could reschedule?", a: "Perhaps", opts: ["Will", "Perhaps", "Do"] },
+        { q: "To be ____, I don't like it.", a: "honest", opts: ["honest", "clear", "real"] },
+        { q: "I was ____ if you were free.", a: "wondering", opts: ["asking", "wondering", "thinking"] },
+        { q: "..., if you don't ____.", a: "mind", opts: ["mind", "care", "worry"] }
+    ];
+
+    const quizData = [
+        { q: "Your boss has a bad idea. How do you start?", a: ["I'm afraid that might be difficult.", "That idea is bad and expensive."], c: 0 },
+        { q: "Correcting a date in a meeting:", a: ["Actually, it's tomorrow.", "You're wrong, it's tomorrow."], c: 0 },
+        { q: "Declining a request politely:", a: ["No, I am too busy.", "To be honest, I have a lot on my plate."], c: 1 },
+        { q: "Asking for help from a senior:", a: ["I was wondering if you could help.", "Help me now!"], c: 0 },
+        { q: "Reporting an error gently:", a: ["It seems there's a small mistake.", "You made a mistake."], c: 0 },
+        { q: "Giving a soft 'No':", a: ["I am not entirely sure that's possible.", "No, it's impossible."], c: 0 },
+        { q: "Suggesting a change:", a: ["Change the color.", "Perhaps we could change the color?"], c: 1 },
+        { q: "Rejecting a budget proposal:", a: ["Unfortunately, we hit the limit.", "No money."], c: 0 },
+        { q: "Softer disagreement:", a: ["I totally disagree.", "With all due respect, I disagree."], c: 1 },
+        { q: "Requesting a file:", a: ["Send it, if you don't mind.", "Send it now!"], c: 0 }
+    ];
+
+    // --- NAVIGATION ---
+    function toggleNav() {
+        document.getElementById('sideNav').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    function toggleDark() { document.body.classList.toggle('dark-mode'); }
+
+    function loadPage(idx) {
+        const content = document.getElementById('main-content');
+        if(document.getElementById('sideNav').classList.contains('active')) toggleNav();
+        
+        const pages = [
+            { t: "The Art of Softening", h: `
+                <div style="text-align:left;">
+                    <p style="font-size: 1.25rem;">Bienvenido al <strong>Diplomacy Hub</strong>. En el nivel B2, tu éxito no solo depende de tu gramática, sino de tu <strong>tono</strong>.</p>
+                    <p>En el entorno profesional internacional, ser "demasiado directo" puede ser percibido como rudo. Los <em>Softeners</em> son frases estratégicas que te permiten discrepar, corregir y pedir favores manteniendo la armonía.</p>
+                    <div style="background: var(--bg-body); padding: 1.5rem; border-radius: 20px; border-left: 6px solid var(--primary); margin: 1.5rem 0;">
+                        <h3 style="margin-top:0;">Lo que aprenderás hoy:</h3>
+                        <ul>
+                            <li><strong>Refusals:</strong> Cómo decir "no" sin sonar negativo.</li>
+                            <li><strong>Disagreements:</strong> Cómo corregir a otros con elegancia.</li>
+                            <li><strong>Requests:</strong> Cómo pedir favores de forma asertiva.</li>
+                        </ul>
+                    </div>
+                    <p>Usa el menú lateral para explorar las 15 herramientas y ponerlas a prueba.</p>
+                </div>
+            ` },
+            { t: "15 Diplomacy Tools", h: toolCategories.map(c => `
+                <h2>${c.cat}</h2>
+                <div class="tools-grid">${c.items.map(i => `
+                    <div class="tool-item">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong>${i.p}</strong>
+                            <button class="listen-btn" onclick="speak('${i.ex.replace(/'/g, "\\'")}')">🔊</button>
+                        </div>
+                        <p style="font-style:italic; margin-top:10px; opacity:0.8;">"${i.ex}"</p>
+                    </div>
+                `).join('')}</div>
+            `).join('') },
+            { t: "🧩 10 Frases: Desplegables", h: `
+                <p>Elige el conector adecuado para cada oración:</p>
+                ${dropDownData.map((d, i) => `
+                    <div class="activity-item">
+                        ${i+1}. ${d.q.replace('____', `
+                            <select onchange="checkSelect(this, '${d.a}')">
+                                <option value="">---</option>
+                                ${d.opts.map(o => `<option value="${o}">${o}</option>`).join('')}
+                            </select>
+                        `)}
+                    </div>
+                `).join('')}
+            ` },
+            { t: "🧠 10 Escenarios: Quiz", h: `
+                <p>¿Cuál es la respuesta más diplomática y profesional?</p>
+                <div id="quiz-area"></div>
+            ` },
+            { t: "✍️ Writing Lab", h: `
+                <p>Reescribe esta frase ruda: <br><strong>"The report is wrong. Redo it."</strong></p>
+                <textarea id="writeArea" placeholder="Ej: To be honest, I'm afraid there's a mistake..."></textarea>
+                <div class="action-group">
+                    <button class="btn-check" onclick="verifyWriting()">Verificar ✨</button>
+                    <button class="btn-audio" onclick="speak(document.getElementById('writeArea').value)">🔊</button>
+                </div>
+                <div id="writeFb" style="margin-top:20px; font-weight:800; padding:1.5rem; border-radius:20px; display:none;"></div>
+            ` }
+        ];
+        
+        content.innerHTML = `<h1>${pages[idx].t}</h1>${pages[idx].h}`;
+        if(idx === 3) renderQuiz();
+        document.querySelectorAll('.nav-link').forEach((b, i) => b.classList.toggle('active', i === idx));
+    }
+
+    function checkSelect(sel, ans) {
+        if(sel.value === ans) {
+            sel.className = "res-correct";
+            confetti({ particleCount: 30 });
+        } else if(sel.value !== "") {
+            sel.className = "res-wrong";
+        } else { sel.className = ""; }
+    }
+
+    function renderQuiz() {
+        const area = document.getElementById('quiz-area');
+        area.innerHTML = quizData.map((d, i) => `
+            <div style="margin-bottom:2.5rem;">
+                <p><strong>${i+1}. ${d.q}</strong></p>
+                ${d.a.map((opt, oi) => `<button class="quiz-opt" onclick="checkQuiz(this, ${oi===d.c})">${opt}</button>`).join('')}
+            </div>
+        `).join('');
+    }
+
+    function checkQuiz(btn, correct) {
+        btn.parentElement.querySelectorAll('button').forEach(b => b.disabled = true);
+        if(correct) {
+            btn.className = "quiz-opt res-correct";
+            confetti({ particleCount: 50 });
+        } else { btn.className = "quiz-opt res-wrong"; }
+    }
+
+    function verifyWriting() {
+        const txt = document.getElementById('writeArea').value.toLowerCase();
+        const keywords = ['actually', 'seems', 'mistake', 'afraid', 'perhaps', 'wondering', 'honest', 'unfortunately', 'mind'];
+        const matches = keywords.filter(k => txt.includes(k));
+        const fb = document.getElementById('writeFb');
+        fb.style.display = 'block';
+        if(matches.length >= 2) {
+            fb.innerText = "✨ ¡Excelente! Has transformado el mensaje con diplomacia.";
+            fb.style.background = "#dcfce7"; fb.style.color = "#166534";
+            confetti({ particleCount: 100 });
+        } else {
+            fb.innerText = "Sigue sonando directo. Intenta usar 'I am afraid', 'It seems' o 'To be honest'.";
+            fb.style.background = "#fee2e2"; fb.style.color = "#991b1b";
+        }
+    }
+
+    loadPage(0);
+</script>
+</body>
+</html>
